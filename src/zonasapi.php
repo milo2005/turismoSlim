@@ -44,16 +44,24 @@ $app->post("/zonas", function($request, $response,$args){
   $body = $request->getBody();
   $body = json_decode($body);
 
+  $img = base64_decode($body->imagen);
+  $name = date_format(new DateTime(), "Y_m_d_H_i_s");
+  $file = fopen("images/".$name.".png","w");
+  fwrite($file,$img);
+  fclose($file);
+  $url = "http://localhost/turismo/public/images/".$name.".png";
+
   $query = $this->db->prepare("INSERT INTO zonas (nombre, descripcion, imagen, direccion)"
    ."VALUES (:n,:d,:i,:di)");
 
-  $status = $query->execute(array(":n"=>$body->nombre, ":d"=>$body->descripcion, ":i"=>$body->imagen,":di"=>$body->direccion));
+  $status = $query->execute(array(":n"=>$body->nombre, ":d"=>$body->descripcion
+  , ":i"=>$url,":di"=>$body->direccion));
 
   $rta = "";
 
   if($status){
     $response = $response->withStatus(200);
-    $rta = json_encode(array("status"=>"OK"));
+    $rta = json_encode(array("status"=>"OK", "img"=>$url));
   }else{
     $response = $response->withStatus(500);
     $rta = json_encode(array("status"=>"FAIL"));
